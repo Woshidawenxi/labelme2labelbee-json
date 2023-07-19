@@ -10,7 +10,7 @@ labelbee是商汤科技开源的计算机视觉领域的 AI 算法框架OpenMMLa
 LabelBee标注工具发源于对商业应用场景的一系列算法标注需求，具备拉框、标签、标点、线条、多边形、文本等常用标注工具，可广泛适用于目标检测、分类、分割、关键点、折线、OCR等算法场景。可以JavaScript SDK的方式灵活的“一键”嵌入到业务系统。也可以直接安装开源的客户端版本，解压开箱即用。Labelbee基于JavaScript标注工具，面对更多关键点的实例分割标注问题有更好的性能和更流畅的交互体验，减少了卡顿提高了标注工作效率。
 Labelme:https://github.com/open-mmlab/labelbee/
 存储结构：
-![Alt text](image.png)
+![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/17edfef0-063f-46ff-9532-d3b5fe4dbb52)
 labelme的数据由一个.json文件（名称为：图片名+.json）和图片组成。
 ![Alt text](image-1.png)
 labelbee的数据由一个.json文件（名称为：图片名+后缀+.json）和图片组成。
