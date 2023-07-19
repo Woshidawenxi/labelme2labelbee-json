@@ -12,7 +12,7 @@ Labelme:https://github.com/open-mmlab/labelbee/
 存储结构：
 ![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/17edfef0-063f-46ff-9532-d3b5fe4dbb52)
 labelme的数据由一个.json文件（名称为：图片名+.json）和图片组成。
-![Alt text](image-1.png)
+![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/771b9f91-ea82-4648-a6ed-bae8e62008b2)
 labelbee的数据由一个.json文件（名称为：图片名+后缀+.json）和图片组成。
 
 ## 二、如何将labelme的json转为labelbee的json文件?
@@ -24,125 +24,40 @@ key4:imagePath对应原图的地址
 key5:imageData对应原图的地址
 key6:imageHeight：图片的高度✔️
 key7:imageWidth：图片的宽度✔️
-![Alt text](image-2.png)
+![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/bd1cf47f-0b06-4d0e-9fa5-92c555dbaadd)
 labelbee的json是一个字典结构，key1:width为图片宽度（转换自labelme-imageWidth）✔️和key2:height为图片高度（转换自labelme-imageHeight）✔️
 key3:vaild对应一个布尔值初始为True，表示该标签生效（这个在映射过程中硬编码为True，后续可以通过交互修改）。key4:rotate对应旋转角度，一般为0（这个在映射过程中硬编码为0，后续可以通过交互修改）。
 key5:step_1对应一个字典，这个字典内部包括dataSourceStep，对应于、toolName对应于任务类型（因为用于实例分割，所以硬编码为："polygonTool"）；result对应的一个列表，不同序数对应于不同的多边形。
 id'(str)8位包括大小写字母，也可以包括部分数字，此处根据规则随记生成一串id；sourcelD一般为空，此处硬编码为空；valid对应一个布尔值，该多边形生效为 True，不生效为False，本脚本硬编码为True；textAttribute，一般为空，此处硬编码为空；pointList对应值为多个字典，每个字典有x、y两个键对应的值为关键点的x、y坐标值（转换自labelme-shapes）；attribute，一般为空，此处硬编码为空；order对应的值是顺序，以1开始，此处根据顺序生成数字的序数。
-![Alt text](image-3.png)
-## 三、环境配置&代码实现
-### 3.1 环境配置
+![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/698ebc93-6efc-4790-976e-4281ed4a24d3)
+## 三、环境配置
 Python 3.8
 labelme 5.0.5
 labelbee 0.1.2
-### 3.2 代码实现
-import json
-import random
-import string
 
-"""
-本代码用于将labelme标注的多边形点的json文件转化为labelbee可以读入的json文件（单步骤的、多边形的），用于搭建其两个不同的软件之间的桥梁.
-"""
-
-"""
-该函数使用了Python的random.choices方法，它从给定字符集合（包括字母和数字）中随机选择k个字符，
-并使用join方法将它们组合成一个字符串。
-如果新生成的字符串已经存在于列表中则继续生成新的字符串，直到找到一个没有出现过的字符串。
-最后返回生成的字符串列表。
-"""
-# 定义一个随机生成8位字符串的函数
-def generate_strings(num_strings):
-    strings = []
-    for i in range(num_strings):
-        random_string = ''.join(random.choices(string.ascii_letters + string.digits, k=8))#k为字符串长度，即8位
-        while random_string in strings:
-            # 如果新生成的字符串已经存在于列表中，重新生成一个新的字符串
-            random_string = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-        strings.append(random_string)
-    return strings
-# 输入图片名称
-image_name = "cat.jpg"
-# 输入labelme文件地址
-labelme_route = image_name[0:-4] +".json"
-
-# 打开 JSON 文件并读取数据
-with open(labelme_route, 'r') as me:# labelme的
-    datame = json.load(me)
-
-# labelme2labelbee->dict
-beeout = {}# 这个就是最后转成json，导出的内容
-beeout['width'] = datame['imageWidth']
-beeout['height'] = datame['imageHeight']
-beeout['valid'] = True
-beeout['rotate'] = int(0)
-
-# 构造存在labelbee中的step_1的dict，step_1用于表示单步骤。
-step_1 = {}
-step_1['toolName'] = 'polygonTool'# 此处仅支持多边形
-
-# 每一个序数对应的dict都表示一个标记的封闭图形。
-# 提取labelme的信息
-meshapes = datame['shapes']# labelme的json中所有的点什么的都在这
-
-result = []# 即step_1中的result(list）
-# 生labelbee的id
-Bee_id = generate_strings(len(meshapes))
-
-for n_medict in range(0, len(meshapes)):
-    # 每循环一次都是一个封闭图形
-    medict = meshapes[n_medict]
-    mepoints = medict['points']
-    result_single = {}
-    result_single['id'] = Bee_id[n_medict]# 8位包括大小写字母，也可以包括部分数字
-    result_single['sourceID'] = ''
-    result_single['valid'] = True
-    result_single['textAttribute'] = ''
-    # 拆开
-    pointList = []# 这个是labelbee的-list
-    for n_mepoint in range(0, len(mepoints)):
-        beepoint = {}
-        mepoint = mepoints[n_mepoint]
-        # mex = mepoint[0]
-        # mey = mepoint[1]
-        beepoint['x'] = mepoint[0]
-        beepoint['y'] = mepoint[1]
-        pointList.append(beepoint)
-    result_single['pointList'] = pointList
-    result_single['attribute'] = ''
-    result_single['order'] = int(n_medict + 1)
-    result.append(result_single)
-
-step_1['result'] = result
-beeout['step_1'] = step_1
-# 保存
-# 将字典保存为JSON文件
-# 需要预先在路径下准备一个对应名称的json
-with open(image_name + '.json', 'w') as bo:
-    json.dump(beeout, bo)
 ## 四 操作
 ### 4.1 labelme标注
 在cmd输出labelme，启动labelme，点击Open选择一张图片。选择CreatePolygons在图片上点击通过绘制多边形全选目标，并以一种labelname命名这个mask。
-![Alt text](image-4.png)
+![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/6455c295-731c-4c14-8245-a447786ec490)
 保存后，图片路径里面可以看到图片和json文件
-![Alt text](image-5.png)
+![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/e4cf6c5b-3a48-437e-8f35-e8c72e738552)
 ### 4.2 脚本转化
 在该路径下创建.py的脚本，粘贴本文脚本进入。
-![Alt text](image-6.png)
+![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/5bdd3f0d-40a7-42a5-b55b-7fd8905992c5)
 填写image name，运行脚本。
-![Alt text](image-7.png)
+![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/c26185b6-6acc-416b-97fb-bc2335c03c17)
 得到一个使用labelbee的json数据文件。
-![Alt text](image-8.png)
+![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/24c653cd-69a3-4c61-b538-b33a7783a3bf)
 ### 4.3 重新将json载入labelbee
 进入labelbee，点击New project，创建一个新的标注项目。选择Single Step创建一个单步骤项目。
-![Alt text](image-9.png)
-![Alt text](image-10.png)
-![Alt text](image-11.png)
+![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/624ff110-c9f7-4796-925e-a99872261c6d)
+![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/669eba40-01af-4d4e-8b24-79c7996eebb0)
+![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/2bf2afe2-981c-4a20-ac66-a210917680d0)
 设定开启Attribute，添加多个类型，点击OK创建完成。
-![Alt text](image-12.png)
+![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/ba6192b0-f3f0-4265-a1ac-43b543fc1ba9)
 选择新创建的Project。
-![Alt text](image-13.png)
-
+![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/2a7d03a6-bddb-459d-aff7-88834d174fa7)
 启动之后发现多个多边形已经存在，只是对应的类型未设定。
-![Alt text](image-14.png)
+![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/3fa92ee0-0f97-4eaf-a06c-eebf2dbf5976)
 通过右键选中多边形，右侧勾选类型，完成整个数据的转换过程。
-![Alt text](image-15.png)
+![image](https://github.com/Woshidawenxi/labelme2labelbee-json/assets/72373043/50ee0f31-4496-430b-bfeb-b0e0dafdc341)
